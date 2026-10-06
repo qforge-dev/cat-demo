@@ -1,5 +1,7 @@
 // Tiny synthesized sound effects: no audio files, nothing to download.
 let ctx;
+let master;
+const MASTER_VOLUME = 0.3; // overall loudness of every effect
 let muted = false;
 try { muted = localStorage.getItem('cat-muted') === '1'; } catch {}
 
@@ -9,6 +11,9 @@ function audio() {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
     ctx = new Ctx();
+    master = ctx.createGain();
+    master.gain.value = MASTER_VOLUME;
+    master.connect(ctx.destination);
   }
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
@@ -33,7 +38,7 @@ function tone(c, { type = 'sine', from, to = from, at = 0, length = 0.15, volume
     osc.connect(f);
     node = f;
   }
-  node.connect(gain).connect(c.destination);
+  node.connect(gain).connect(master);
   osc.start(t);
   osc.stop(t + length + 0.05);
 }
@@ -50,8 +55,8 @@ function meow(c, at = 0, pitch = 1) {
 
   const gain = c.createGain();
   gain.gain.setValueAtTime(0.0001, t);
-  gain.gain.exponentialRampToValueAtTime(0.32, t + 0.05);
-  gain.gain.setValueAtTime(0.32, t + 0.25);
+  gain.gain.exponentialRampToValueAtTime(0.22, t + 0.05);
+  gain.gain.setValueAtTime(0.22, t + 0.25);
   gain.gain.exponentialRampToValueAtTime(0.0001, t + length);
 
   // "mee" to "ow": the lower band opens up as the mouth does.
@@ -70,7 +75,7 @@ function meow(c, at = 0, pitch = 1) {
   mix.gain.value = 1.4;
   osc.connect(low).connect(mix);
   osc.connect(high).connect(mix);
-  mix.connect(gain).connect(c.destination);
+  mix.connect(gain).connect(master);
   osc.start(t);
   osc.stop(t + length + 0.05);
 }
@@ -88,7 +93,7 @@ export const sfx = {
   },
   thump(c = audio()) {
     if (!c) return;
-    tone(c, { type: 'sine', from: 170, to: 45, length: 0.16, volume: 0.45 });
+    tone(c, { type: 'sine', from: 170, to: 45, length: 0.16, volume: 0.3 });
   },
   cat(sure = 1) {
     const c = audio();
@@ -100,8 +105,8 @@ export const sfx = {
     const c = audio();
     if (!c) return;
     this.thump(c);
-    tone(c, { type: 'sawtooth', from: 310, to: 250, at: 0.12, length: 0.3, volume: 0.16, filter: 900 });
-    tone(c, { type: 'sawtooth', from: 250, to: 150, at: 0.44, length: 0.5, volume: 0.16, filter: 700 });
+    tone(c, { type: 'sawtooth', from: 310, to: 250, at: 0.12, length: 0.3, volume: 0.11, filter: 900 });
+    tone(c, { type: 'sawtooth', from: 250, to: 150, at: 0.44, length: 0.5, volume: 0.11, filter: 700 });
   },
   unsure() {
     const c = audio();
