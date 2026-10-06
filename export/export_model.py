@@ -29,9 +29,12 @@ def main() -> None:
     parser.add_argument('--weights', type=Path, required=True)
     parser.add_argument('--dataset', type=Path, required=True)
     parser.add_argument('--report', type=Path, required=True)
+    parser.add_argument('--predictions', type=Path, required=True)
+    parser.add_argument('--weights-sha256', required=True)
+    parser.add_argument('--source-run', required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    expected_sha = '14b9421228a5e08e6f473eae962ab0f2423c8666e17dbf3f9c1db1d871555687'
+    expected_sha = args.weights_sha256
     assert hashlib.sha256(args.weights.read_bytes()).hexdigest() == expected_sha
     saved = torch.load(args.weights, map_location='cpu', weights_only=True)
     assert saved['model'] == 'cat-cnn-v1' and saved['image_size'] == 128
@@ -45,30 +48,33 @@ def main() -> None:
     torch.onnx.export(model, torch.zeros(1, 3, 128, 128), target, input_names=['image'], output_names=['logit'], opset_version=18, dynamo=False, external_data=False, dynamic_axes={'image': {0: 'batch'}, 'logit': {0: 'batch'}})
     onnx.checker.check_model(str(target))
     session = ort.InferenceSession(str(target), providers=['CPUExecutionProvider'])
-    names, labels, inputs = [], [], []
+    report = json.loads(args.report.read_text())
+    predictions = {row['path']: row for row in json.loads(args.predictions.read_text())}
+    correct, max_difference, max_saved_difference = 0, 0.0, 0.0
     with zipfile.ZipFile(args.dataset) as archive:
-        for name in sorted(archive.namelist()):
-            if name.startswith('test/') and name.endswith('.png'):
+        names = sorted(name for name in archive.namelist() if name.startswith('test/') and name.endswith('.png'))
+        assert len(names) == report['test_samples'] == len(predictions)
+        for start in range(0, len(names), 64):
+            batch_names = names[start:start + 64]
+            inputs = []
+            for name in batch_names:
                 with Image.open(io.BytesIO(archive.read(name))) as image:
                     rgb = ImageOps.exif_transpose(image).convert('RGB').resize((128, 128), Image.Resampling.BILINEAR)
                     inputs.append(np.array(rgb, dtype=np.float32).transpose(2, 0, 1) / 127.5 - 1)
-                names.append(name)
-                labels.append(int(name.split('/')[1] == 'cat'))
-        for domain in ['cat', 'dog']:
-            name = next(name for name in names if name.startswith(f'test/{domain}/'))
-            (output/f'{domain}.jpg').write_bytes(archive.read('previews/'+name.removesuffix('.png')+'.jpg'))
-    inputs = np.stack(inputs)
-    assert len(inputs) == 1467
-    with torch.no_grad():
-        reference = torch.cat([model(batch).flatten() for batch in torch.from_numpy(inputs).split(64)]).numpy()
-    actual = np.concatenate([session.run(['logit'], {'image': inputs[i:i+64]})[0].flatten() for i in range(0,len(inputs),64)])
-    assert np.isfinite(actual).all()
-    assert np.array_equal(actual >= 0, reference >= 0)
-    max_difference = float(np.max(np.abs(actual-reference)))
+            inputs = np.stack(inputs)
+            with torch.no_grad():
+                reference = model(torch.from_numpy(inputs)).flatten().numpy()
+            actual = session.run(['logit'], {'image': inputs})[0].flatten()
+            assert np.isfinite(actual).all()
+            assert np.array_equal(actual >= 0, reference >= 0)
+            assert np.array_equal(actual >= 0, [predictions[name]['prediction'] for name in batch_names])
+            max_difference = max(max_difference, float(np.max(np.abs(actual-reference))))
+            max_saved_difference = max(max_saved_difference, float(np.max(np.abs(actual-np.array([predictions[name]['logit'] for name in batch_names])))))
+            correct += int(((actual >= 0) == [predictions[name]['target'] for name in batch_names]).sum())
     assert max_difference < 0.0001, max_difference
-    report = json.loads(args.report.read_text())
-    assert int(((actual>=0) == np.array(labels)).sum()) == 1455
-    evidence = dict(source_run='9dc855da-9c8f-4df1-8291-e5425caa8663',source_weights_sha256=expected_sha,onnx_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),samples=1467,matching_cpu_decisions=1467,correct=1455,max_onnx_cpu_logit_difference=max_difference,trained_parameters=97809,epochs=15,training_samples=14336,normalization='RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1',metrics={key:report[key] for key in ['accuracy','balanced_accuracy','cat_precision','cat_recall','nll','brier']},dataset='AFHQ v2',attribution='NAVER Corporation; Choi et al., StarGAN v2 (2020)',dataset_license='CC BY-NC 4.0')
+    assert max_saved_difference < 0.005, max_saved_difference
+    assert correct == report['confusion']['true_cat'] + report['confusion']['true_other']
+    evidence = dict(source_run=args.source_run,source_weights_sha256=expected_sha,onnx_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),samples=len(names),matching_cpu_decisions=len(names),matching_saved_gpu_decisions=len(names),correct=correct,max_onnx_cpu_logit_difference=max_difference,max_saved_gpu_logit_difference=max_saved_difference,trained_parameters=report['model_parameters'],epochs=report['epochs'],training_samples=report['training_samples'],normalization='RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1',metrics={key:report[key] for key in ['accuracy','balanced_accuracy','cat_precision','cat_recall','nll','brier']},per_source_metrics=report['per_source_metrics'],dataset=report['dataset']['dataset'],dataset_revision=report['dataset_revision'],sources=report['dataset']['sources'],attribution='AFHQ: NAVER Corporation; Choi et al., StarGAN v2 (2020). Cats and Dogs: Microsoft.',dataset_license='AFHQ: CC BY-NC 4.0; Microsoft: CDLA-Permissive-2.0')
     (output/'model.json').write_text(json.dumps(evidence,indent=2)+'\n')
     print(json.dumps(evidence,indent=2))
 

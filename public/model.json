@@ -1,32 +1,85 @@
 {
-  "source_run": "9dc855da-9c8f-4df1-8291-e5425caa8663",
-  "source_weights_sha256": "14b9421228a5e08e6f473eae962ab0f2423c8666e17dbf3f9c1db1d871555687",
-  "onnx_sha256": "312ae64d44b5093d280ae2389353e6c93db5cab4aac4ae255f9e761823709331",
-  "samples": 1467,
-  "matching_cpu_decisions": 1467,
-  "correct": 1455,
-  "max_onnx_cpu_logit_difference": 1.9073486328125e-05,
+  "source_run": "cefcd5f6-a14a-41f4-baae-106a03d6dcb7",
+  "source_weights_sha256": "6ce76f3d61864568a2a8ede20c0a5b37e6ebdb2f495e1da773abc80df4f60cfb",
+  "onnx_sha256": "d2714d91e975098cd50af0f83b74331aa7ba3c9d971f335534c3bdfed3fbd694",
+  "samples": 6491,
+  "matching_cpu_decisions": 6491,
+  "matching_saved_gpu_decisions": 6491,
+  "correct": 6030,
+  "max_onnx_cpu_logit_difference": 3.147125244140625e-05,
+  "max_saved_gpu_logit_difference": 1.239776611328125e-05,
   "trained_parameters": 97809,
   "epochs": 15,
-  "training_samples": 14336,
+  "training_samples": 34279,
   "normalization": "RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1",
   "metrics": {
-    "accuracy": 0.9918200408997955,
-    "balanced_accuracy": 0.9923372804478302,
-    "cat_precision": 0.9819639278557114,
-    "cat_recall": 0.9939148073022313,
-    "nll": 0.03685900568962097,
-    "brier": 0.008178255520761013
+    "accuracy": 0.9289785857340933,
+    "balanced_accuracy": 0.92975122469738,
+    "cat_precision": 0.9095574085952534,
+    "cat_recall": 0.9406301824212272,
+    "nll": 0.17698875069618225,
+    "brier": 0.05207652971148491
   },
-  "dataset": "AFHQ v2",
-  "attribution": "NAVER Corporation; Choi et al., StarGAN v2 (2020)",
-  "dataset_license": "CC BY-NC 4.0",
+  "per_source_metrics": {
+    "afhq": {
+      "samples": 1467,
+      "accuracy": 0.9856850715746421,
+      "balanced_accuracy": 0.988218009004919,
+      "cat_precision": 0.9627450980392157,
+      "cat_recall": 0.9959432048681541,
+      "baseline_accuracy": 0.6639400124549866,
+      "baseline_balanced_accuracy": 0.5,
+      "nll": 0.05097062140703201,
+      "brier": 0.012532524764537811,
+      "confusion": {
+        "true_cat": 491,
+        "true_other": 955,
+        "false_cat": 19,
+        "missed_cat": 2
+      }
+    },
+    "microsoft": {
+      "samples": 5024,
+      "accuracy": 0.9124203821656051,
+      "balanced_accuracy": 0.9123508489005783,
+      "cat_precision": 0.8991564417177914,
+      "cat_recall": 0.9298176050753371,
+      "baseline_accuracy": 0.4980095624923706,
+      "baseline_balanced_accuracy": 0.5,
+      "nll": 0.21378585696220398,
+      "brier": 0.06362331658601761,
+      "confusion": {
+        "true_cat": 2345,
+        "true_other": 2239,
+        "false_cat": 263,
+        "missed_cat": 177
+      }
+    }
+  },
+  "dataset": "AFHQ v2 + Microsoft Cats and Dogs",
+  "dataset_revision": "ec5d7010-0488-4974-bc80-ceaa2349027c",
+  "sources": [
+    {
+      "name": "afhq",
+      "url": "https://github.com/clovaai/stargan-v2/tree/875b70a150609e8a678ed8482562e7074cdce7e5",
+      "sha256": "6f2540f22c6d8ebb8879a2bc0227666dd4fc765cc355cb073b63a835d679e4e3",
+      "license": "CC BY-NC 4.0"
+    },
+    {
+      "name": "microsoft",
+      "url": "https://download.microsoft.com/download/3/E/1/3E1C3F21-ECDB-4869-8368-6DEBA77B919F/kagglecatsanddogs_5340.zip",
+      "sha256": "b7974bd00a84a99921f36ee4403f089853777b5ae8d151c76a86e64900334af9",
+      "license": "CDLA-Permissive-2.0"
+    }
+  ],
+  "attribution": "AFHQ: NAVER Corporation; Choi et al., StarGAN v2 (2020). Cats and Dogs: Microsoft.",
+  "dataset_license": "AFHQ: CC BY-NC 4.0; Microsoft: CDLA-Permissive-2.0",
   "browser_validation": {
     "engine": "ONNX Runtime Web WASM, Chrome",
-    "samples": 1467,
-    "matching_onnx_cpu_decisions": 1467,
-    "correct": 1455,
-    "max_onnx_cpu_logit_difference": 4.76837158203125e-06,
-    "resize_validation": "Byte-identical to Pillow bilinear across five synthetic sizes"
+    "samples": 6491,
+    "matching_onnx_cpu_decisions": 6491,
+    "correct": 6030,
+    "max_onnx_cpu_logit_difference": 5.7220458984375e-06,
+    "preprocessing": "Raw RGB without ICC conversion; PNG keyed transparency retained to match Pillow RGB"
   }
 }

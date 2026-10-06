@@ -8,6 +8,23 @@ ort.env.wasm.proxy = false;
 ort.env.wasm.wasmPaths = { wasm: wasmUrl, mjs: mjsUrl };
 let sessionPromise;
 
+async function trainingPixels(file) {
+  if (file.type !== 'image/png') return file;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.length < 8 || bytes[0] !== 137 || bytes[1] !== 80) return file;
+  const view = new DataView(bytes.buffer);
+  const chunks = [bytes.subarray(0, 8)];
+  for (let offset = 8; offset + 12 <= bytes.length;) {
+    const end = offset + view.getUint32(offset) + 12;
+    if (end > bytes.length) return file;
+    // Pillow RGB conversion retains keyed transparent pixels; canvas would discard them.
+    const type = String.fromCharCode(...bytes.subarray(offset + 4, offset + 8));
+    if (type !== 'tRNS') chunks.push(bytes.subarray(offset, end));
+    offset = end;
+  }
+  return new Blob(chunks, { type: 'image/png' });
+}
+
 async function getSession(modelUrl) {
   if (!sessionPromise) {
     sessionPromise = ort.InferenceSession.create(modelUrl, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' }).catch(error => {
@@ -24,7 +41,8 @@ self.onmessage = async ({ data }) => {
   try {
     self.postMessage({ id, state: 'loading' });
     const session = await getSession(modelUrl);
-    bitmap = await createImageBitmap(file);
+    // Match training's RGB values without applying embedded color profiles.
+    bitmap = await createImageBitmap(await trainingPixels(file), { colorSpaceConversion: 'none' });
     if (bitmap.width * bitmap.height > 32000000) throw new Error('That picture is too large. Try an image under 32 megapixels.');
     const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
     const context = canvas.getContext('2d', { willReadFrequently: true });

@@ -11,7 +11,7 @@ const error = document.querySelector('#error');
 const photo = document.querySelector('#photo');
 const filename = document.querySelector('#filename');
 const worker = new Worker(new URL('./inference-worker.js', import.meta.url), { type: 'module' });
-const modelUrl = new URL(`${import.meta.env.BASE_URL}cat.onnx`, location.href).href;
+const modelUrl = new URL(`${import.meta.env.BASE_URL}cat.onnx?v=6ce76f3d61864568`, location.href).href;
 let current = 0;
 let photoUrl;
 let busy = false;
