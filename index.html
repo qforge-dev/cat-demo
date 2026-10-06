@@ -3,45 +3,58 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#edf3fb" />
-    <meta name="description" content="Is it a cat? Try a tiny CNN trained from scratch. Pictures stay on your device; predictions run in your browser." />
-    <title>Cat check — a tiny model by Labqoat</title>
+    <meta name="theme-color" content="#ffd84a" />
+    <meta name="description" content="A tiny neural network that decides if your photo is a cat. It runs in your browser, so your pictures never leave the page." />
+    <title>Is it a cat? A tiny model by Labqoat</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   </head>
   <body>
-    <header class="masthead">
-      <a class="brand" href="./" aria-label="Cat check home"><img src="./favicon.svg" alt="" width="34" height="34" /> Cat check <span>by Labqoat</span></a>
-      <a class="source-link" href="https://github.com/qforge-dev/cat-demo" target="_blank" rel="noopener">See the code <span aria-hidden="true">↗</span></a>
-    </header>
     <main>
-      <section class="intro" aria-labelledby="headline">
-        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> A very small model. A very big question.</p>
-        <h1 id="headline">Cat or <br /><span>not cat?</span></h1>
-        <p class="description">One picture. One answer.<br />Meet a tiny neural network that learned<br class="desktop-break" /> to spot cats and reject backgrounds.</p>
-        <button id="choose" class="primary" type="button">Choose a picture <span aria-hidden="true">↗</span></button>
-        <input id="file" type="file" accept="image/jpeg,image/png,image/webp" hidden />
-        <p class="private-note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> Your picture stays on your device.</p>
-        <div class="try-samples"><button id="random" class="sample" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01" stroke-linecap="round" stroke-width="3"/></svg> Random picture</button><span>From 100 animal photos</span></div>
-      </section>
-      <section class="checker" aria-label="Picture and prediction">
-        <div class="photo-frame" id="dropzone">
-          <div id="empty" class="empty-frame">
-            <svg class="cat-outline" viewBox="0 0 160 160" fill="none" aria-hidden="true"><path d="M30 76V24l39 27a74 74 0 0 1 22 0l39-27v52c15 44-14 69-50 69S15 120 30 76Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="m49 89 6 4m50 0 6-4M74 108h12l-6 7-6-7Zm6 7v8m-51-19 24 4m-27 9 27-1m78-12-24 4m27 9-27-1" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-            <p>Drop a picture here</p><span>JPG, PNG or WebP · up to 20 MB</span>
+      <h1>Is it a cat?</h1>
+      <p class="lede">Show a tiny neural network a photo and get a straight answer.</p>
+
+      <div class="stage" id="stage">
+        <span class="ear ear-left" aria-hidden="true"></span>
+        <span class="ear ear-right" aria-hidden="true"></span>
+
+        <div class="frame" id="dropzone">
+          <div class="empty" id="empty">
+            <div class="eyes" aria-hidden="true">
+              <span class="eye"><i class="pupil"></i></span>
+              <span class="eye"><i class="pupil"></i></span>
+            </div>
+            <p>Waiting for a photo</p>
           </div>
-          <img id="photo" alt="Your chosen picture" hidden />
-          <span id="filename" class="filename" hidden></span>
-          <span class="frame-label">IN / PICTURE</span>
+          <img id="photo" alt="The photo you picked" hidden />
         </div>
-        <div class="readout" aria-live="polite" aria-atomic="true">
-          <div class="result-copy"><p class="eyebrow">OUT / ANSWER</p><h2 id="answer">Waiting for a picture</h2><p id="status">1 = cat · 0 = not cat</p></div>
-          <span id="digit" class="digit" aria-label="No prediction yet">—</span>
-        </div>
-        <p id="error" class="error" role="alert" hidden></p>
-      </section>
-      <section class="about" aria-label="About the model"><p><strong>389,153 parameters.</strong> Trained from scratch on 41,682 images. No cloud inference.</p><p>94.98% on 10,922 heldout images: animals, scenes and backgrounds. Small cats and unfamiliar scenes can still fool it.</p></section>
+
+        <div class="verdict" id="verdict" hidden></div>
+      </div>
+
+      <div class="readout" aria-live="polite" aria-atomic="true">
+        <p class="comment" id="comment">Drop a photo here, or pick one below.</p>
+        <p class="meta" id="meta"></p>
+        <p class="error" id="error" role="alert" hidden></p>
+      </div>
+
+      <div class="actions">
+        <button id="random" class="btn btn-primary" type="button">Random cat</button>
+        <button id="choose" class="btn btn-secondary" type="button">Upload your own</button>
+        <input id="file" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+      </div>
     </main>
-    <footer><span>A little experiment by <a href="https://app.labqoat.com/runs/de7cf26b-ac38-4e46-99bd-6ff753a78639" target="_blank" rel="noopener">Labqoat</a>.</span><span>Trained on <a href="https://github.com/clovaai/stargan-v2#animal-faces-hq-dataset-afhq" target="_blank" rel="noopener">AFHQ v2</a> (NAVER / Choi et al.) + <a href="https://www.microsoft.com/en-us/download/details.aspx?id=54765" target="_blank" rel="noopener">Microsoft Cats and Dogs</a> + <a href="https://host.robots.ox.ac.uk/pascal/VOC/voc2007/" target="_blank" rel="noopener">PASCAL VOC 2007</a> + synthetic backgrounds · <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Non-commercial demo</a></span></footer>
+
+    <footer>
+      <p class="privacy">The model runs entirely in your browser. Your photos never leave this page.</p>
+      <p class="love">Raised with love on 41,682 photos, using <a href="https://labqoat.com" target="_blank" rel="noopener">Labqoat</a>.</p>
+      <p class="fine">
+        Right 95% of the time on 10,922 photos it had never seen. Small cats and odd scenes can still fool it.
+        Data: <a href="https://github.com/clovaai/stargan-v2#animal-faces-hq-dataset-afhq" target="_blank" rel="noopener">AFHQ v2</a>,
+        <a href="https://www.microsoft.com/en-us/download/details.aspx?id=54765" target="_blank" rel="noopener">Microsoft Cats and Dogs</a>,
+        <a href="https://host.robots.ox.ac.uk/pascal/VOC/voc2007/" target="_blank" rel="noopener">PASCAL VOC 2007</a>
+        and synthetic backgrounds. <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">Non-commercial demo.</a>
+      </p>
+    </footer>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

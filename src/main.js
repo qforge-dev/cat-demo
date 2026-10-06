@@ -1,18 +1,28 @@
 import './styles.css';
 
-const fileInput = document.querySelector('#file');
-const choose = document.querySelector('#choose');
-const dropzone = document.querySelector('#dropzone');
-const readout = document.querySelector('.readout');
-const answer = document.querySelector('#answer');
-const status = document.querySelector('#status');
-const digit = document.querySelector('#digit');
-const error = document.querySelector('#error');
-const photo = document.querySelector('#photo');
-const filename = document.querySelector('#filename');
-const random = document.querySelector('#random');
+const $ = selector => document.querySelector(selector);
+const fileInput = $('#file');
+const choose = $('#choose');
+const random = $('#random');
+const stage = $('#stage');
+const dropzone = $('#dropzone');
+const empty = $('#empty');
+const photo = $('#photo');
+const verdict = $('#verdict');
+const comment = $('#comment');
+const meta = $('#meta');
+const error = $('#error');
+
 const worker = new Worker(new URL('./inference-worker.js', import.meta.url), { type: 'module' });
 const modelUrl = new URL(`${import.meta.env.BASE_URL}cat.onnx?v=ec662b6ca20a633b`, location.href).href;
+
+const lines = {
+  cat: ['Yep, that’s a cat.', 'Cat detected. Very cat.', 'Confirmed: cat.', 'Big cat energy.', 'Checks out. Cat.'],
+  notCat: ['Not a cat. Sorry.', 'No cat here. Suspicious.', 'Cat-free. Bold choice.', 'Nope. Not even close.', 'Nothing cat-like in sight.'],
+  unsure: ['Hmm. Could go either way.', 'I’m squinting and still not sure.'],
+};
+const pick = list => list[Math.floor(Math.random() * list.length)];
+
 let current = 0;
 let photoUrl;
 let busy = false;
@@ -23,62 +33,73 @@ function setBusy(value) {
   busy = value;
   choose.disabled = value;
   random.disabled = value;
-  readout.dataset.loading = String(value);
+  stage.dataset.loading = String(value);
+}
+
+function clearResult() {
+  delete stage.dataset.result;
+  verdict.hidden = true;
+  meta.textContent = '';
+  error.hidden = true;
 }
 
 function showError(message) {
+  clearResult();
+  comment.textContent = 'That one didn’t work.';
   error.textContent = message;
   error.hidden = false;
-  answer.textContent = 'Try another picture';
-  status.textContent = '1 = cat · 0 = not cat';
-  digit.textContent = '—';
-  digit.setAttribute('aria-label', 'No prediction');
-  delete readout.dataset.result;
   setBusy(false);
 }
 
 function check(file) {
   if (busy) return;
-  if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return showError('Choose a JPG, PNG or WebP picture.');
-  if (file.size > 20 * 1024 * 1024) return showError('That file is too large. Choose a picture under 20 MB.');
+  if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return showError('Pick a JPG, PNG or WebP photo.');
+  if (file.size > 20 * 1024 * 1024) return showError('That file is over 20 MB. Pick a smaller photo.');
   current++;
-  error.hidden = true;
-  delete readout.dataset.result;
+  clearResult();
   if (photoUrl) URL.revokeObjectURL(photoUrl);
   photoUrl = URL.createObjectURL(file);
   photo.src = photoUrl;
   photo.hidden = false;
-  document.querySelector('#empty').hidden = true;
-  filename.textContent = file.name || 'Sample picture';
-  filename.hidden = false;
-  answer.textContent = 'Checking your picture';
-  status.textContent = 'Loading the model on your device…';
-  digit.textContent = '…';
-  digit.setAttribute('aria-label', 'Prediction in progress');
+  empty.hidden = true;
+  comment.textContent = 'Squinting…';
   setBusy(true);
   worker.postMessage({ id: current, file, modelUrl });
 }
 
 worker.onmessage = ({ data }) => {
   if (data.id !== current) return;
-  if (data.state === 'loading') status.textContent = 'Loading the model on your device…';
-  if (data.state === 'scoring') status.textContent = 'Looking for a cat…';
+  if (data.state === 'loading') comment.textContent = 'Waking up the model…';
+  if (data.state === 'scoring') comment.textContent = 'Squinting…';
   if (data.state === 'error') showError(data.message);
   if (data.state === 'done') {
     setBusy(false);
-    readout.dataset.result = String(data.prediction);
-    digit.textContent = String(data.prediction);
-    digit.setAttribute('aria-label', `${data.prediction}: ${data.prediction ? 'cat' : 'not cat'}`);
-    answer.textContent = data.prediction ? 'Looks like a cat' : 'Doesn’t look like a cat';
-    status.textContent = `Checked on your device in ${Math.round(data.milliseconds)} ms`;
+    const isCat = data.prediction === 1;
+    const catChance = 1 / (1 + Math.exp(-data.logit));
+    const sure = isCat ? catChance : 1 - catChance;
+    stage.dataset.result = String(data.prediction);
+    verdict.textContent = isCat ? 'It’s a cat' : 'Not a cat';
+    verdict.hidden = false;
+    // Restart the stamp animation on repeat results.
+    verdict.style.animation = 'none';
+    void verdict.offsetWidth;
+    verdict.style.animation = '';
+    comment.textContent = sure < 0.65 ? pick(lines.unsure) : pick(isCat ? lines.cat : lines.notCat);
+    meta.textContent = `${Math.round(sure * 100)}% sure · ${Math.max(1, Math.round(data.milliseconds))} ms, on your device`;
   }
 };
-worker.onerror = () => showError('This browser could not start the model. Try a current Chrome, Edge, Firefox or Safari.');
+worker.onerror = () => showError('This browser could not start the model. Try a recent Chrome, Edge, Firefox or Safari.');
+
 choose.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', () => { check(fileInput.files[0]); fileInput.value = ''; });
 dropzone.addEventListener('dragover', event => { event.preventDefault(); if (!busy) dropzone.classList.add('dragging'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
 dropzone.addEventListener('drop', event => { event.preventDefault(); dropzone.classList.remove('dragging'); check(event.dataTransfer.files[0]); });
+document.addEventListener('paste', event => {
+  const file = [...(event.clipboardData?.files ?? [])].find(f => f.type.startsWith('image/'));
+  if (file) check(file);
+});
+
 async function nextSample() {
   if (!samplesPromise) {
     samplesPromise = fetch(`${import.meta.env.BASE_URL}samples.json`).then(async response => {
@@ -86,9 +107,9 @@ async function nextSample() {
       const samples = await response.json();
       if (samples.length !== 100) throw new Error('samples');
       return samples;
-    }).catch(error => {
+    }).catch(err => {
       samplesPromise = undefined;
-      throw error;
+      throw err;
     });
   }
   if (!remainingSamples.length) {
@@ -110,8 +131,23 @@ random.addEventListener('click', async () => {
     if (!response.ok) throw new Error('sample');
     const blob = await response.blob();
     setBusy(false);
-    check(new File([blob], `Random picture ${sample.number} of 100`, { type: 'image/jpeg' }));
+    check(new File([blob], `Random photo ${sample.number}`, { type: 'image/jpeg' }));
   } catch {
-    showError('Could not load the sample. Choose your own picture instead.');
+    showError('Could not load a random photo. Upload your own instead.');
+  }
+});
+
+// Eyes in the empty frame follow the pointer.
+const pupils = [...document.querySelectorAll('.pupil')];
+window.addEventListener('pointermove', event => {
+  if (empty.hidden) return;
+  for (const pupil of pupils) {
+    const rect = pupil.parentElement.getBoundingClientRect();
+    const dx = event.clientX - (rect.left + rect.width / 2);
+    const dy = event.clientY - (rect.top + rect.height / 2);
+    const distance = Math.hypot(dx, dy) || 1;
+    const reach = Math.min(14, distance / 12);
+    pupil.style.setProperty('--px', `${(dx / distance) * reach}px`);
+    pupil.style.setProperty('--py', `${(dy / distance) * reach * 0.6}px`);
   }
 });
