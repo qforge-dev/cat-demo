@@ -9,6 +9,10 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
   </head>
   <body>
+    <button id="sound" class="sound" type="button" aria-pressed="false" aria-label="Sound effects on">
+      <svg class="icon-on" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/></svg>
+      <svg class="icon-off" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z"/><path d="m16 9.5 5 5m0-5-5 5"/></svg>
+    </button>
     <main>
       <h1>Is it a cat?</h1>
       <p class="lede">Show a tiny neural network a photo and get a straight answer.</p>
@@ -46,7 +50,7 @@
 
     <footer>
       <p class="privacy">The model runs entirely in your browser. Your photos never leave this page.</p>
-      <p class="love">Raised with love on 41,682 photos, using <a href="https://labqoat.com" target="_blank" rel="noopener">Labqoat</a>.</p>
+      <p class="love">Trained on 41,682 photos with <a href="https://labqoat.com" target="_blank" rel="noopener">Labqoat</a>.</p>
       <p class="fine">
         Right 95% of the time on 10,922 photos it had never seen. Small cats and odd scenes can still fool it.
         Data: <a href="https://github.com/clovaai/stargan-v2#animal-faces-hq-dataset-afhq" target="_blank" rel="noopener">AFHQ v2</a>,

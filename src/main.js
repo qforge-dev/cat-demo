@@ -1,4 +1,5 @@
 import './styles.css';
+import { sfx } from './sfx.js';
 
 const $ = selector => document.querySelector(selector);
 const fileInput = $('#file');
@@ -49,6 +50,7 @@ function showError(message) {
   error.textContent = message;
   error.hidden = false;
   setBusy(false);
+  sfx.error();
 }
 
 function check(file) {
@@ -84,17 +86,35 @@ worker.onmessage = ({ data }) => {
     verdict.style.animation = 'none';
     void verdict.offsetWidth;
     verdict.style.animation = '';
-    comment.textContent = sure < 0.65 ? pick(lines.unsure) : pick(isCat ? lines.cat : lines.notCat);
+    if (sure < 0.65) {
+      comment.textContent = pick(lines.unsure);
+      sfx.unsure();
+    } else {
+      comment.textContent = pick(isCat ? lines.cat : lines.notCat);
+      if (isCat) sfx.cat(sure); else sfx.notCat();
+    }
     meta.textContent = `${Math.round(sure * 100)}% sure · ${Math.max(1, Math.round(data.milliseconds))} ms, on your device`;
   }
 };
 worker.onerror = () => showError('This browser could not start the model. Try a recent Chrome, Edge, Firefox or Safari.');
 
-choose.addEventListener('click', () => fileInput.click());
+choose.addEventListener('click', () => { sfx.pop(); fileInput.click(); });
 fileInput.addEventListener('change', () => { check(fileInput.files[0]); fileInput.value = ''; });
 dropzone.addEventListener('dragover', event => { event.preventDefault(); if (!busy) dropzone.classList.add('dragging'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
-dropzone.addEventListener('drop', event => { event.preventDefault(); dropzone.classList.remove('dragging'); check(event.dataTransfer.files[0]); });
+dropzone.addEventListener('drop', event => { event.preventDefault(); dropzone.classList.remove('dragging'); sfx.pop(); check(event.dataTransfer.files[0]); });
+
+const sound = $('#sound');
+function renderSound() {
+  sound.setAttribute('aria-pressed', String(sfx.muted));
+  sound.setAttribute('aria-label', sfx.muted ? 'Sound effects off' : 'Sound effects on');
+}
+renderSound();
+sound.addEventListener('click', () => {
+  sfx.setMuted(!sfx.muted);
+  renderSound();
+  sfx.pop();
+});
 document.addEventListener('paste', event => {
   const file = [...(event.clipboardData?.files ?? [])].find(f => f.type.startsWith('image/'));
   if (file) check(file);
@@ -124,6 +144,7 @@ async function nextSample() {
 
 random.addEventListener('click', async () => {
   if (busy) return;
+  sfx.pop();
   setBusy(true);
   try {
     const sample = await nextSample();

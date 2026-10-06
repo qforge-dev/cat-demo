@@ -190,6 +190,28 @@ h1 {
 .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
 .btn:disabled { opacity: 0.55; cursor: wait; }
 
+.sound {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.sound:hover { transform: scale(1.08); }
+.sound:active { transform: scale(0.95); }
+.sound .icon-off { display: none; }
+.sound[aria-pressed="true"] .icon-on { display: none; }
+.sound[aria-pressed="true"] .icon-off { display: block; }
+
 footer {
   margin-top: auto;
   padding-top: 56px;
