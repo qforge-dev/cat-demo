@@ -10,16 +10,19 @@ const digit = document.querySelector('#digit');
 const error = document.querySelector('#error');
 const photo = document.querySelector('#photo');
 const filename = document.querySelector('#filename');
+const random = document.querySelector('#random');
 const worker = new Worker(new URL('./inference-worker.js', import.meta.url), { type: 'module' });
-const modelUrl = new URL(`${import.meta.env.BASE_URL}cat.onnx?v=6ce76f3d61864568`, location.href).href;
+const modelUrl = new URL(`${import.meta.env.BASE_URL}cat.onnx?v=ec662b6ca20a633b`, location.href).href;
 let current = 0;
 let photoUrl;
 let busy = false;
+let samplesPromise;
+let remainingSamples = [];
 
 function setBusy(value) {
   busy = value;
   choose.disabled = value;
-  document.querySelectorAll('.sample').forEach(button => button.disabled = value);
+  random.disabled = value;
   readout.dataset.loading = String(value);
 }
 
@@ -76,16 +79,39 @@ fileInput.addEventListener('change', () => { check(fileInput.files[0]); fileInpu
 dropzone.addEventListener('dragover', event => { event.preventDefault(); if (!busy) dropzone.classList.add('dragging'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragging'));
 dropzone.addEventListener('drop', event => { event.preventDefault(); dropzone.classList.remove('dragging'); check(event.dataTransfer.files[0]); });
-document.querySelectorAll('.sample').forEach(button => button.addEventListener('click', async () => {
+async function nextSample() {
+  if (!samplesPromise) {
+    samplesPromise = fetch(`${import.meta.env.BASE_URL}samples.json`).then(async response => {
+      if (!response.ok) throw new Error('samples');
+      const samples = await response.json();
+      if (samples.length !== 100) throw new Error('samples');
+      return samples;
+    }).catch(error => {
+      samplesPromise = undefined;
+      throw error;
+    });
+  }
+  if (!remainingSamples.length) {
+    remainingSamples = [...await samplesPromise];
+    for (let i = remainingSamples.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [remainingSamples[i], remainingSamples[j]] = [remainingSamples[j], remainingSamples[i]];
+    }
+  }
+  return remainingSamples.pop();
+}
+
+random.addEventListener('click', async () => {
   if (busy) return;
   setBusy(true);
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}${button.dataset.sample}.jpg`);
+    const sample = await nextSample();
+    const response = await fetch(`${import.meta.env.BASE_URL}${sample.file}`);
     if (!response.ok) throw new Error('sample');
     const blob = await response.blob();
     setBusy(false);
-    check(new File([blob], `${button.dataset.sample}.jpg`, { type: 'image/jpeg' }));
+    check(new File([blob], `Random picture ${sample.number} of 100`, { type: 'image/jpeg' }));
   } catch {
     showError('Could not load the sample. Choose your own picture instead.');
   }
-}));
+});

@@ -1,63 +1,98 @@
 {
-  "source_run": "cefcd5f6-a14a-41f4-baae-106a03d6dcb7",
-  "source_weights_sha256": "6ce76f3d61864568a2a8ede20c0a5b37e6ebdb2f495e1da773abc80df4f60cfb",
-  "onnx_sha256": "d2714d91e975098cd50af0f83b74331aa7ba3c9d971f335534c3bdfed3fbd694",
-  "samples": 6491,
-  "matching_cpu_decisions": 6491,
-  "matching_saved_gpu_decisions": 6491,
-  "correct": 6030,
-  "max_onnx_cpu_logit_difference": 3.147125244140625e-05,
-  "max_saved_gpu_logit_difference": 1.239776611328125e-05,
-  "trained_parameters": 97809,
+  "source_run": "de7cf26b-ac38-4e46-99bd-6ff753a78639",
+  "source_weights_sha256": "ec662b6ca20a633b15fa73ffef7268d07db14369fcc843723a19397551a36c36",
+  "onnx_sha256": "1ef400763a006cb036f3003762d027efecae3d032e6878365d5234dc87cd939a",
+  "samples": 10922,
+  "matching_cpu_decisions": 10922,
+  "matching_saved_gpu_decisions": 10922,
+  "correct": 10374,
+  "max_onnx_cpu_logit_difference": 2.002716064453125e-05,
+  "max_saved_gpu_logit_difference": 1.430511474609375e-05,
+  "trained_parameters": 389153,
+  "width_multiplier": 2,
   "epochs": 15,
-  "training_samples": 34279,
+  "training_samples": 41682,
   "normalization": "RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1",
   "metrics": {
-    "accuracy": 0.9289785857340933,
-    "balanced_accuracy": 0.92975122469738,
-    "cat_precision": 0.9095574085952534,
-    "cat_recall": 0.9406301824212272,
-    "nll": 0.17698875069618225,
-    "brier": 0.05207652971148491
+    "accuracy": 0.9498260391869621,
+    "balanced_accuracy": 0.9285129095050023,
+    "cat_precision": 0.9335676625659051,
+    "cat_recall": 0.8809286898839138,
+    "nll": 0.12793906033039093,
+    "brier": 0.03605936840176582
   },
   "per_source_metrics": {
     "afhq": {
       "samples": 1467,
-      "accuracy": 0.9856850715746421,
-      "balanced_accuracy": 0.988218009004919,
-      "cat_precision": 0.9627450980392157,
-      "cat_recall": 0.9959432048681541,
+      "accuracy": 0.9870483980913429,
+      "balanced_accuracy": 0.9872412960085968,
+      "cat_precision": 0.974,
+      "cat_recall": 0.9878296146044625,
       "baseline_accuracy": 0.6639400124549866,
       "baseline_balanced_accuracy": 0.5,
-      "nll": 0.05097062140703201,
-      "brier": 0.012532524764537811,
+      "nll": 0.038310062140226364,
+      "brier": 0.009154957719147205,
       "confusion": {
-        "true_cat": 491,
-        "true_other": 955,
-        "false_cat": 19,
-        "missed_cat": 2
+        "true_cat": 487,
+        "true_other": 961,
+        "false_cat": 13,
+        "missed_cat": 6
       }
     },
     "microsoft": {
       "samples": 5024,
-      "accuracy": 0.9124203821656051,
-      "balanced_accuracy": 0.9123508489005783,
-      "cat_precision": 0.8991564417177914,
-      "cat_recall": 0.9298176050753371,
+      "accuracy": 0.9088375796178344,
+      "balanced_accuracy": 0.909032646998975,
+      "cat_precision": 0.9538258575197889,
+      "cat_recall": 0.8600317208564632,
       "baseline_accuracy": 0.4980095624923706,
       "baseline_balanced_accuracy": 0.5,
-      "nll": 0.21378585696220398,
-      "brier": 0.06362331658601761,
+      "nll": 0.22233958542346954,
+      "brier": 0.06501216441392899,
       "confusion": {
-        "true_cat": 2345,
-        "true_other": 2239,
-        "false_cat": 263,
-        "missed_cat": 177
+        "true_cat": 2169,
+        "true_other": 2397,
+        "false_cat": 105,
+        "missed_cat": 353
+      }
+    },
+    "synthetic": {
+      "samples": 1000,
+      "accuracy": 1.0,
+      "balanced_accuracy": 0.5,
+      "cat_precision": 0.0,
+      "cat_recall": 0.0,
+      "baseline_accuracy": 1.0,
+      "baseline_balanced_accuracy": 0.5,
+      "nll": 0.006866589654237032,
+      "brier": 0.0003436945553403348,
+      "confusion": {
+        "true_cat": 0,
+        "true_other": 1000,
+        "false_cat": 0,
+        "missed_cat": 0
+      }
+    },
+    "voc": {
+      "samples": 3431,
+      "accuracy": 0.9793063246866802,
+      "balanced_accuracy": 0.4896531623433401,
+      "cat_precision": 0.0,
+      "cat_recall": 0.0,
+      "baseline_accuracy": 1.0,
+      "baseline_balanced_accuracy": 0.5,
+      "nll": 0.06331942230463028,
+      "brier": 0.015577169135212898,
+      "confusion": {
+        "true_cat": 0,
+        "true_other": 3360,
+        "false_cat": 71,
+        "missed_cat": 0
       }
     }
   },
-  "dataset": "AFHQ v2 + Microsoft Cats and Dogs",
-  "dataset_revision": "ec5d7010-0488-4974-bc80-ceaa2349027c",
+  "dataset": "Cats versus everything: AFHQ + Microsoft + VOC backgrounds + synthetic",
+  "dataset_revision": "6e313713-2e25-451c-a3aa-e2a2a972cd0d",
   "sources": [
     {
       "name": "afhq",
@@ -70,16 +105,33 @@
       "url": "https://download.microsoft.com/download/3/E/1/3E1C3F21-ECDB-4869-8368-6DEBA77B919F/kagglecatsanddogs_5340.zip",
       "sha256": "b7974bd00a84a99921f36ee4403f089853777b5ae8d151c76a86e64900334af9",
       "license": "CDLA-Permissive-2.0"
+    },
+    {
+      "name": "voc",
+      "url": "https://thor.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar",
+      "sha256": "7d8cd951101b0957ddfd7a530bdc8a94f06121cfc1e511bb5937e973020c7508",
+      "license": "VOC original image terms"
+    },
+    {
+      "name": "voc",
+      "url": "https://thor.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar",
+      "sha256": "6836888e2e01dca84577a849d339fa4f73e1e4f135d312430c4856b5609b4892",
+      "license": "VOC original image terms"
+    },
+    {
+      "name": "synthetic",
+      "version": "cat-backgrounds-v1",
+      "license": "CC0-1.0"
     }
   ],
-  "attribution": "AFHQ: NAVER Corporation; Choi et al., StarGAN v2 (2020). Cats and Dogs: Microsoft.",
-  "dataset_license": "AFHQ: CC BY-NC 4.0; Microsoft: CDLA-Permissive-2.0",
+  "attribution": "AFHQ: NAVER Corporation; Choi et al., StarGAN v2 (2020). Cats and Dogs: Microsoft. VOC: PASCAL VOC 2007 contributors. Synthetic backgrounds: Labqoat.",
+  "dataset_license": "CC BY-NC 4.0; CDLA-Permissive-2.0; VOC original image terms; CC0-1.0",
   "browser_validation": {
     "engine": "ONNX Runtime Web WASM, Chrome",
-    "samples": 6491,
-    "matching_onnx_cpu_decisions": 6491,
-    "correct": 6030,
-    "max_onnx_cpu_logit_difference": 5.7220458984375e-06,
+    "samples": 10922,
+    "matching_saved_gpu_decisions": 10922,
+    "correct": 10374,
+    "max_saved_gpu_logit_difference": 1.52587890625e-05,
     "preprocessing": "Raw RGB without ICC conversion; PNG keyed transparency retained to match Pillow RGB"
   }
 }

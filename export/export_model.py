@@ -15,13 +15,14 @@ from PIL import Image, ImageOps
 from torch import nn
 
 
-def network() -> nn.Sequential:
+def network(width_multiplier: int) -> nn.Sequential:
     layers = []
     channels = 3
     for width in (16, 32, 64, 128):
+        width *= width_multiplier
         layers.extend((nn.Conv2d(channels, width, 3, padding=1, bias=False), nn.BatchNorm2d(width), nn.ReLU(), nn.MaxPool2d(2)))
         channels = width
-    return nn.Sequential(*layers, nn.AdaptiveAvgPool2d(1), nn.Flatten(), nn.Linear(128, 1))
+    return nn.Sequential(*layers, nn.AdaptiveAvgPool2d(1), nn.Flatten(), nn.Linear(channels, 1))
 
 
 def main() -> None:
@@ -40,15 +41,19 @@ def main() -> None:
     assert saved['model'] == 'cat-cnn-v1' and saved['image_size'] == 128
     assert saved['labels'] == {'cat': 1, 'not_cat': 0} and saved['epochs'] == 15
     torch.set_num_threads(1)
-    model = network().eval()
+    width_multiplier = saved.get('width_multiplier', 1)
+    assert width_multiplier in (1, 2)
+    model = network(width_multiplier).eval()
     model.load_state_dict(saved['state_dict'], strict=True)
+    report = json.loads(args.report.read_text())
+    assert sum(parameter.numel() for parameter in model.parameters()) == report['model_parameters']
+    assert width_multiplier == report.get('width_multiplier', 1)
     output = args.output
     output.mkdir(parents=True, exist_ok=True)
     target = output / 'cat.onnx'
     torch.onnx.export(model, torch.zeros(1, 3, 128, 128), target, input_names=['image'], output_names=['logit'], opset_version=18, dynamo=False, external_data=False, dynamic_axes={'image': {0: 'batch'}, 'logit': {0: 'batch'}})
     onnx.checker.check_model(str(target))
     session = ort.InferenceSession(str(target), providers=['CPUExecutionProvider'])
-    report = json.loads(args.report.read_text())
     predictions = {row['path']: row for row in json.loads(args.predictions.read_text())}
     correct, max_difference, max_saved_difference = 0, 0.0, 0.0
     with zipfile.ZipFile(args.dataset) as archive:
@@ -74,7 +79,7 @@ def main() -> None:
     assert max_difference < 0.0001, max_difference
     assert max_saved_difference < 0.005, max_saved_difference
     assert correct == report['confusion']['true_cat'] + report['confusion']['true_other']
-    evidence = dict(source_run=args.source_run,source_weights_sha256=expected_sha,onnx_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),samples=len(names),matching_cpu_decisions=len(names),matching_saved_gpu_decisions=len(names),correct=correct,max_onnx_cpu_logit_difference=max_difference,max_saved_gpu_logit_difference=max_saved_difference,trained_parameters=report['model_parameters'],epochs=report['epochs'],training_samples=report['training_samples'],normalization='RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1',metrics={key:report[key] for key in ['accuracy','balanced_accuracy','cat_precision','cat_recall','nll','brier']},per_source_metrics=report['per_source_metrics'],dataset=report['dataset']['dataset'],dataset_revision=report['dataset_revision'],sources=report['dataset']['sources'],attribution='AFHQ: NAVER Corporation; Choi et al., StarGAN v2 (2020). Cats and Dogs: Microsoft.',dataset_license='AFHQ: CC BY-NC 4.0; Microsoft: CDLA-Permissive-2.0')
+    evidence = dict(source_run=args.source_run,source_weights_sha256=expected_sha,onnx_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),samples=len(names),matching_cpu_decisions=len(names),matching_saved_gpu_decisions=len(names),correct=correct,max_onnx_cpu_logit_difference=max_difference,max_saved_gpu_logit_difference=max_saved_difference,trained_parameters=report['model_parameters'],width_multiplier=width_multiplier,epochs=report['epochs'],training_samples=report['training_samples'],normalization='RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1',metrics={key:report[key] for key in ['accuracy','balanced_accuracy','cat_precision','cat_recall','nll','brier']},per_source_metrics=report['per_source_metrics'],dataset=report['dataset']['dataset'],dataset_revision=report['dataset_revision'],sources=report['dataset']['sources'],attribution='AFHQ: NAVER Corporation; Choi et al., StarGAN v2 (2020). Cats and Dogs: Microsoft. VOC: PASCAL VOC 2007 contributors. Synthetic backgrounds: Labqoat.',dataset_license='; '.join(dict.fromkeys(source['license'] for source in report['dataset']['sources'])))
     (output/'model.json').write_text(json.dumps(evidence,indent=2)+'\n')
     print(json.dumps(evidence,indent=2))
 
