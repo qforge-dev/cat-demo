@@ -1,0 +1,32 @@
+{
+  "source_run": "9dc855da-9c8f-4df1-8291-e5425caa8663",
+  "source_weights_sha256": "14b9421228a5e08e6f473eae962ab0f2423c8666e17dbf3f9c1db1d871555687",
+  "onnx_sha256": "312ae64d44b5093d280ae2389353e6c93db5cab4aac4ae255f9e761823709331",
+  "samples": 1467,
+  "matching_cpu_decisions": 1467,
+  "correct": 1455,
+  "max_onnx_cpu_logit_difference": 1.9073486328125e-05,
+  "trained_parameters": 97809,
+  "epochs": 15,
+  "training_samples": 14336,
+  "normalization": "RGB, Pillow bilinear resize to 128x128, CHW, pixel/127.5-1",
+  "metrics": {
+    "accuracy": 0.9918200408997955,
+    "balanced_accuracy": 0.9923372804478302,
+    "cat_precision": 0.9819639278557114,
+    "cat_recall": 0.9939148073022313,
+    "nll": 0.03685900568962097,
+    "brier": 0.008178255520761013
+  },
+  "dataset": "AFHQ v2",
+  "attribution": "NAVER Corporation; Choi et al., StarGAN v2 (2020)",
+  "dataset_license": "CC BY-NC 4.0",
+  "browser_validation": {
+    "engine": "ONNX Runtime Web WASM, Chrome",
+    "samples": 1467,
+    "matching_onnx_cpu_decisions": 1467,
+    "correct": 1455,
+    "max_onnx_cpu_logit_difference": 4.76837158203125e-06,
+    "resize_validation": "Byte-identical to Pillow bilinear across five synthetic sizes"
+  }
+}
